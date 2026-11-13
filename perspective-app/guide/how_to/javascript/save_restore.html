@@ -1,0 +1,498 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Saving and restoring UI state (JavaScript) — Perspective data grid, pivot table &amp; charts</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../../css/general-2459343d.css">
+        <link rel="stylesheet" href="../../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../md/perspective-8cbf3dad.css">
+        <link rel="stylesheet" href="../../node_modules/@perspective-dev/viewer/dist/css/themes-57f4a3d5.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex-67275574.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc-b81732ec.js"></script>
+        <meta name="description" content="&lt;perspective-viewer&gt; is persistent, in that its entire state (sans the data itself) can be serialized or deserialized. This include all column, filter, pivot, expressions, etc. properties, as well as datagrid style settings, config panel visibility, and more. This overloaded feature covers a range…" />
+        <link rel="canonical" href="https://perspective-dev.github.io/guide/how_to/javascript/save_restore.html" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Perspective" />
+        <meta property="og:title" content="Saving and restoring UI state (JavaScript) — Perspective data grid, pivot table &amp; charts" />
+        <meta property="og:description" content="&lt;perspective-viewer&gt; is persistent, in that its entire state (sans the data itself) can be serialized or deserialized. This include all column, filter, pivot, expressions, etc. properties, as well as datagrid style settings, config panel visibility, and more. This overloaded feature covers a range…" />
+        <meta property="og:url" content="https://perspective-dev.github.io/guide/how_to/javascript/save_restore.html" />
+        <meta property="og:image" content="https://perspective-dev.github.io/projects/light/collage.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="alternate" type="text/markdown" href="/guide/how_to/javascript/save_restore.md" />
+        <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Perspective","item":"https://perspective-dev.github.io/"},{"@type":"ListItem","position":2,"name":"Guide","item":"https://perspective-dev.github.io/guide/index.html"},{"@type":"ListItem","position":3,"name":"JavaScript"},{"@type":"ListItem","position":4,"name":"Saving and restoring UI state","item":"https://perspective-dev.github.io/guide/how_to/javascript/save_restore.html"}]}</script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Perspective</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/perspective-dev/perspective" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="saving-and-restoring-ui-state"><a class="header" href="#saving-and-restoring-ui-state">Saving and restoring UI state.</a></h1>
+<p><code>&lt;perspective-viewer&gt;</code> is <em>persistent</em>, in that its entire state (sans the data
+itself) can be serialized or deserialized. This include all column, filter,
+pivot, expressions, etc. properties, as well as datagrid style settings, config
+panel visibility, and more. This overloaded feature covers a range of use cases:</p>
+<ul>
+<li>Setting a <code>&lt;perspective-viewer&gt;</code>’s initial state after a <code>load()</code> call.</li>
+<li>Updating a single or subset of properties, without modifying others.</li>
+<li>Resetting some or all properties to their data-relative default.</li>
+<li>Persisting a user’s configuration to <code>localStorage</code> or a server.</li>
+</ul>
+<h2 id="serializing-and-deserializing-the-viewer-state"><a class="header" href="#serializing-and-deserializing-the-viewer-state">Serializing and deserializing the viewer state</a></h2>
+<p>To retrieve the entire state as a JSON-ready JavaScript object, use the <code>save()</code>
+method.</p>
+<pre><code class="language-javascript">const token = await elem.save();
+</code></pre>
+<p>The token can be restored to any <code>&lt;perspective-viewer&gt;</code> with a <code>Table</code> of
+identical schema, via the <code>restore()</code> method. Note that while the data for a
+token returned from <code>save()</code> may differ, generally its schema may not, as many
+other settings depend on column names and types.</p>
+<pre><code class="language-javascript">await elem.restore(token);
+</code></pre>
+<p><code>restore()</code> validates its argument, rejecting for example a key the config
+format does not define; when a rejected token is stamped with another release’s
+<code>version</code>, the error names that release. Tokens saved by older releases should
+be upgraded first — see <a href="../rust/migrate.html">Migrating saved configs</a>.</p>
+<pre><code class="language-javascript">// This will error!
+await elem.restore(JSON.stringify(json_token));
+</code></pre>
+<h3 id="updating-individual-properties"><a class="header" href="#updating-individual-properties">Updating individual properties</a></h3>
+<p>Using the JSON format, every facet of a <code>&lt;perspective-viewer&gt;</code>’s configuration
+can be manipulated from JavaScript using the <code>restore()</code> method. The valid
+structure of properties is described via the
+<a href="https://github.com/perspective-dev/perspective/blob/master/rust/perspective-viewer/src/ts/ts-rs/ViewerConfigUpdate.ts"><code>ViewerConfigUpdate</code></a>
+and embedded
+<a href="https://github.com/perspective-dev/perspective/blob/master/rust/perspective-js/src/ts/ts-rs/ViewConfigUpdate.ts"><code>ViewConfigUpdate</code></a>
+type declarations (both generated from the Rust definitions), and the
+<a href="../../explanation/view.html"><code>View</code></a> chapter of the documentation which has
+several examples for each <code>ViewConfig</code> property.</p>
+<pre><code class="language-javascript">// Set the plugin (will also update `columns` to plugin-defaults)
+await elem.restore({ plugin: "X Bar" });
+
+// Update plugin and columns (only draws once)
+await elem.restore({ plugin: "X Bar", columns: ["Sales"] });
+
+// Open the config panel
+await elem.restore({ settings: true });
+
+// Create an expression
+await elem.restore({
+    columns: ['"Sales" + 100'],
+    expressions: { "New Column": '"Sales" + 100' },
+});
+
+// ERROR if the column does not exist in the schema or expressions
+// await elem.restore({columns: ["\"Sales\" + 100"], expressions: {}});
+
+// Add a filter
+await elem.restore({ filter: [["Sales", "&lt;", 100]] });
+
+// Add a sort, don't remove filter
+await elem.restore({ sort: [["Prodit", "desc"]] });
+
+// Reset just filter, preserve sort
+await elem.restore({ filter: undefined });
+
+// Reset all properties to default e.g. after `load()`
+await elem.reset();
+</code></pre>
+<p>Another effective way to quickly create a token for a desired configuration is
+to simply copy the token returned from <code>save()</code> after settings the view manually
+in the browser. The JSON format is human-readable and should be quite easy to
+tweak once generated, as <code>save()</code> will return even the default settings for all
+properties. You can call <code>save()</code> in your application code, or e.g. through the
+Chrome developer console:</p>
+<pre><code class="language-javascript">// Copy to clipboard
+copy(await document.querySelector("perspective-viewer").save());
+</code></pre>
+<h2 id="multi-panel-viewers"><a class="header" href="#multi-panel-viewers">Multi-panel viewers</a></h2>
+<p><code>save()</code> and <code>restore()</code> operate on a <em>single</em> panel — the <em>active</em> one by
+default, or a specific panel via their optional <code>{ panel }</code> selector (e.g.
+<code>await elem.save({ panel: "my-panel" })</code>). If <code>restore()</code>’s <code>panel</code> names no
+existing panel, a new panel is created with that id.</p>
+<p>A <code>&lt;perspective-viewer&gt;</code> may host multiple panels. To serialize or restore the
+<em>whole element</em> — every panel plus the layout and cross-filter state — use
+<code>saveWorkspace()</code> and <code>restoreWorkspace()</code> instead:</p>
+<pre><code class="language-javascript">const workspace_token = await elem.saveWorkspace();
+await elem.restoreWorkspace(workspace_token);
+</code></pre>
+<p>A <code>saveWorkspace()</code> token is a <code>WorkspaceConfig</code>
+(<code>{ version, layout, panels, ... }</code>), not a <code>ViewerConfig</code> — passing it to the
+single-panel <code>restore()</code> is rejected (its <code>panels</code>/<code>layout</code> keys are not part
+of a <code>ViewerConfig</code>).</p>
+<p>The <code>layout</code> field is the tree arranging the panels into a grid of rows and
+columns or stacks of tabs, naming every panel id exactly once. See
+<a href="./layout.html">Arranging panels: layouts and dashboards</a> for its format and for
+rearranging, resizing and stacking existing panels.</p>
+<p>Like <code>restore()</code>, <code>restoreWorkspace()</code> applies an <em>update</em>: a field that is
+absent leaves that part of the element unchanged, <code>null</code> resets it to its
+default, and a value replaces it. <code>panels</code> is the whole panel set — when present
+every existing panel is replaced (<code>{}</code> empties the element); when absent the
+panels are kept, and <code>layout</code>, <code>active</code> and <code>masters</code> name them by their
+existing ids. So a cross-filter can be applied to the current panels without
+re-creating them:</p>
+<pre><code class="language-javascript">await elem.restoreWorkspace({ global_filters: [["Region", "==", "West"]] });
+await elem.restoreWorkspace({ global_filters: null }); // clear
+</code></pre>
+<h3 id="derived-tables"><a class="header" href="#derived-tables">Derived tables</a></h3>
+<p>A workspace token carries a top-level <code>derived_tables</code> map, one entry per
+derived <code>Table</code> the element owns, each naming the <code>table</code> its source <code>View</code>
+reads plus that view’s config:</p>
+<pre><code class="language-javascript">await elem.restoreWorkspace({
+    panels: { one: { table: "Region Totals", plugin: "Datagrid" } },
+    derived_tables: {
+        "Region Totals": { table: "superstore", group_by: ["Region"] },
+    },
+});
+</code></pre>
+<p>Within a workspace token, panels refer to tables by name, so a panel entry never
+contains a derivation of its own — <code>one</code> above simply binds <code>"Region Totals"</code>.
+Entries may name another derived table as their <code>table</code>, and they are built
+parent-first regardless of the order they appear in.</p>
+<p><code>derived_tables</code> follows the same update rule as <code>panels</code>: absent keeps the
+current set, a value replaces it entirely, and <code>{}</code> deletes every derived table.
+An entry whose definition has not changed is reused rather than rebuilt.</p>
+<p>A derived table whose <code>table</code> is not hosted yet does not fail the restore — it
+and anything under it wait, along with the panels bound to them, and are built
+when the parent table appears. A dependency cycle is rejected outright.</p>
+<p>The single-panel format inlines instead: <code>save()</code> of a panel bound to a derived
+table writes the whole definition recursively in the <code>table</code> field, so the token
+is self-contained:</p>
+<pre><code class="language-javascript">await elem.restore({
+    plugin: "Datagrid",
+    table: { table: "superstore", group_by: ["Region"] },
+});
+</code></pre>
+<p><code>restore()</code> rebinds to an existing derived table when one was built from a
+structurally identical definition, and otherwise creates one under a generated
+name. Only the single-panel <code>restore()</code> accepts the inline form — in
+<code>restoreWorkspace()</code> every <code>table</code> field is a name.</p>
+<p>See <a href="../../explanation/derived_table.html">Derived tables</a>.</p>
+<h2 id="datetime-formats"><a class="header" href="#datetime-formats">Datetime formats</a></h2>
+<p>A <code>date</code> or <code>datetime</code> column’s <code>date_format</code> is a subset of
+<code>Intl.DateTimeFormatOptions</code>: either the <code>dateStyle</code>/<code>timeStyle</code> presets or
+per-part fields (<code>weekday</code>, <code>year</code>, <code>month</code>, <code>day</code>, <code>hour</code>, <code>minute</code>, <code>second</code>,
+<code>fractionalSecondDigits</code>), never both, plus optional <code>timeZone</code> and <code>hour12</code>. As
+in <code>Intl</code>, a display field that is left out is not shown:</p>
+<pre><code class="language-javascript">await viewer.restore({
+    columns_config: {
+        "Order Date": { date_format: { dateStyle: "long", timeZone: "UTC" } },
+    },
+});
+</code></pre>
+<p>A column inherits the plugin’s display fields until it sets any of them, and
+inherits <code>timeZone</code> and <code>hour12</code> individually.</p>
+<p>Configs saved before 5.7.0 used a <code>"disabled"</code> value and a <code>format: "custom"</code>
+marker, and a missing preset field meant <code>short</code> date or <code>medium</code> time.
+<code>restore()</code> rejects the removed forms, and restores any other <code>date_format</code>
+with its current meaning — <code>{ dateStyle: "long" }</code> shows the date alone,
+whatever its <code>version</code>. <a href="../rust/migrate.html"><code>perspective-migrate</code></a> rewrites
+older tokens into the current form with their original rendering.</p>
+<h2 id="colors-palettes-and-gradients"><a class="header" href="#colors-palettes-and-gradients">Colors, palettes and gradients</a></h2>
+<p>Per-column color styling lives in a panel’s <code>columns_config</code>, keyed by column
+name, and every color-scale value is a string usable verbatim in CSS:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Kind</th><th>Value</th></tr>
+</thead>
+<tbody>
+<tr><td>color</td><td><code>"#rrggbb"</code> (<code>#rgb</code>, <code>rgb()</code> and <code>rgba()</code> are accepted on input)</td></tr>
+<tr><td>palette</td><td><code>"linear-gradient(to right, #rrggbb, #rrggbb, …)"</code> — N colors, <strong>no</strong> positions</td></tr>
+<tr><td>gradient</td><td><code>"linear-gradient(to right, #rrggbb 0%, #rrggbb 37.5%, …)"</code> — every stop positioned</td></tr>
+</tbody>
+</table>
+</div>
+<p>Which reader applies is decided by the style control’s kind, never by inspecting
+the string. The datagrid’s <code>fg_color</code>/<code>bg_color</code> are read according to the
+column’s type and its <code>fg_mode</code>/<code>bg_mode</code>: a gradient for numeric columns, a
+color for string and datetime columns in <code>"color"</code> mode, and a palette for
+string columns in <code>"series"</code> mode; the charts’ <code>gradient</code> is a gradient and
+<code>palette</code> a palette. A position anywhere in a palette is rejected, while a
+gradient may omit positions on input (the CSS implicit-position rules fill them)
+and may carry any direction token, which is normalized to <code>to right</code>. A mode the
+column’s type does not accept (say <code>fg_mode: "series"</code> on a float column)
+rejects the <code>restore()</code> call, as does a value that does not parse under the
+mode’s reader. Values equal to the plugin’s default are not serialized.</p>
+<pre><code class="language-javascript">await viewer.restore({
+    plugin: "Datagrid",
+    columns_config: {
+        Profit: {
+            bg_mode: "gradient",
+            bg_color: "linear-gradient(to right, #ff0000, #ffffff, #0000ff)",
+        },
+    },
+});
+</code></pre>
+<p>Any of these may instead be a reference to a CSS custom property of the same
+kind — <code>"var(--psp-user--color-&lt;name&gt;)"</code>, <code>"var(--psp-user--palette-&lt;name&gt;)"</code> or
+<code>"var(--psp-user--gradient-&lt;name&gt;)"</code>. References are resolved when the config is
+written, against the element’s computed style: the <code>palette</code> of the last
+<code>restoreWorkspace()</code> (below) takes precedence, then any <code>--psp-user--*</code> property
+a theme or the page defines on the element. An unresolvable reference is dropped
+(the plugin’s default renders). Panels hold literals from then on — <code>save()</code>
+always emits literals, and the column style tab always edits a literal.</p>
+<p><code>saveWorkspace()</code> emits a <strong>palette</strong>: every color value in use across the
+panels is written in <code>panels</code> as a <code>var()</code> reference, and the top-level
+<code>palette</code> map (custom property name → value) carries each referenced definition
+once. Names are stable — a value keeps the name the last <code>restoreWorkspace()</code>
+gave it when the values match, reuses a theme entry’s name when it matches one
+(<code>--psp-user--&lt;kind&gt;-1</code>, <code>-2</code>, … are discovered by contiguous numbering), and
+otherwise takes a fresh <code>--psp-user--&lt;kind&gt;-N</code>. <code>restoreWorkspace()</code> applies
+<code>palette</code> to the element as inline custom properties (replacing any previously
+restored palette) before the panels’ references resolve — which also makes it
+the way to inject a brand or theme variation for a workspace to draw on.</p>
+<p>By default only the values the panels reference are serialized; a restored
+palette’s unused entries, and values pinned during a session, are in-session
+state. Pass <code>{ full_palette: true }</code> to emit the element’s whole set — in-use
+values unioned with the last restored palette and anything pinned since — for a
+symmetric round trip:</p>
+<pre><code class="language-javascript">const used_only = await elem.saveWorkspace();
+const everything = await elem.saveWorkspace({ full_palette: true });
+</code></pre>
+<p>In the column style tab, each color field’s <strong>Load</strong> control lists the element’s
+set (plus theme entries) for every panel and applies a chosen entry’s value to
+the field; <strong>Pin</strong> — offered while the field holds a value the restored set
+lacks — adds that value to the set for the rest of the session.</p>
+<pre><code class="language-javascript">await elem.restoreWorkspace({
+    palette: {
+        "--psp-user--gradient-heat":
+            "linear-gradient(to right, #0366d6, #ff7f0e)",
+        "--psp-user--palette-brand":
+            "linear-gradient(to right, #2771a8, #8b86ff, #ff471e)",
+    },
+    panels: {
+        sales: {
+            table: "superstore",
+            plugin: "Heatmap",
+            columns: ["Sales"],
+            columns_config: {
+                Sales: { gradient: "var(--psp-user--gradient-heat)" },
+            },
+        },
+    },
+});
+</code></pre>
+<p>A malformed <code>palette</code> entry (a key outside
+<code>--psp-user--{gradient,palette,color}-</code>, or a value its kind rejects) fails the
+whole <code>restoreWorkspace()</code> before any panel changes.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../how_to/javascript/theming.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../../how_to/javascript/layout.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../how_to/javascript/theming.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../../how_to/javascript/layout.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../../mark-09e88c2c.min.js"></script>
+        <script src="../../searcher-c2a407aa.js"></script>
+
+        <script src="../../clipboard-1626706a.min.js"></script>
+        <script src="../../highlight-abc7f01d.js"></script>
+        <script src="../../book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
