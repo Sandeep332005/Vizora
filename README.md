@@ -55,21 +55,21 @@ Traditional web dashboards choke on 10,000 to 50,000 rows because they rely on s
 ### 1. Interactive Workspace & Multi-Project Gallery
 Explore real-world datasets across **Superstore Sales, NYPD CCRB Allegations, 120 Years of Olympic History, SF Evictions, Movies, Mandelbrot Fractals, and 3D Raycasting**.
 
-![Vizora Workspace Gallery](docs/screenshots/workspace_gallery.png)
+![Vizora Workspace Gallery](docs/screenshots/vizora_workspace_gallery.png?raw=true)
 
 ---
 
 ### 2. Real-Time Trading Blotter, Depth Charts & Market Heatmap
 Differential tick processing handling streaming order books, bid/ask depth timeseries, and real-time candlestick charts at 60 FPS without memory leaks.
 
-![Market Trading Desk & Blotter](docs/screenshots/market_trading_desk.jpg)
+![Market Trading Desk & Blotter](docs/screenshots/vizora_market_trading_desk.jpg?raw=true)
 
 ---
 
 ### 3. In-Browser DuckDB-WASM SQL Console
 Execute analytical SQL queries directly over in-memory Parquet and Arrow buffers in your browser tab, and convert any query result into an interactive pivot panel with one click.
 
-![DuckDB SQL Console & Heatmap](docs/screenshots/duckdb_sql_console.jpg)
+![DuckDB SQL Console & Heatmap](docs/screenshots/vizora_duckdb_sql_console.jpg?raw=true)
 
 ---
 
@@ -220,9 +220,9 @@ VIZORA/
 │       └── deploy.yml              # Automated GitHub Pages CI/CD deployment
 ├── docs/
 │   └── screenshots/               # Working proofs and UI screenshots
-│       ├── duckdb_sql_console.jpg
-│       ├── market_trading_desk.jpg
-│       └── workspace_gallery.png
+│       ├── vizora_duckdb_sql_console.jpg
+│       ├── vizora_market_trading_desk.jpg
+│       └── vizora_workspace_gallery.png
 ├── perspective-app/               # Production WebAssembly Single-Page Application
 │   ├── index.html                 # Main entry point with relative asset resolution
 │   ├── index.js                   # Client driver & DuckDB-WASM auto-catalog engine
